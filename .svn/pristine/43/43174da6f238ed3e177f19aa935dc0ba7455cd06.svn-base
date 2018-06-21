@@ -1,0 +1,426 @@
+package com.org.irsystem.service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.org.irsystem.model.Location;
+import com.org.irsystem.model.QueryAttribute;
+import com.org.irsystem.model.QueryDetail;
+import com.org.irsystem.model.QueryText;
+import com.org.irsystem.model.UserDocument;
+import com.org.irsystem.util.SortUserDocumentByPrice;
+import com.org.irsystem.util.ValueComparators;
+
+
+@Service
+public class SearchServiceImpl implements SearchService {
+
+	@Autowired
+	private QueryTextService queryTextService;
+
+	@Autowired
+	private ValueComparators valueComparators;
+
+	@Resource
+	private UserDocumentService userDocumentService;
+	
+	@Autowired
+	private LocationService locationService;
+
+	QueryDetail queryDetails = null;
+	
+	Map<UserDocument,Float> sortedMap = null;
+
+	@Override
+	public Map<UserDocument, Float> getQueryValueDocuments(QueryText queryText) {
+
+		// global declaration
+		List<UserDocument> result = new ArrayList<UserDocument>();
+		Map<UserDocument, Float> userDocuments = new LinkedHashMap<>();
+		List<QueryAttribute> attributes = new ArrayList<>();
+
+		// Natural sorting order by comparator
+		Map<String, QueryDetail> map = new TreeMap<>();
+
+
+		try {
+
+			// get all queries
+			List<QueryText> queryTextList = queryTextService.getAll();
+
+
+			// flush data from query text and child tables
+			for (QueryText queryText2 : queryTextList) {
+				queryTextService.delete(queryText2.getId());
+			}
+
+			// QueryText 
+			// Location:Pune, Type:Mobile
+			// Price:1000, Location:Mumbai
+
+			// split the query text line by new line \n
+			String[] queryTexts = queryText.getText().split("\n");
+
+			if (queryTexts != null && queryTexts.length > 0) {
+
+				for (String text : queryTexts) {
+
+					// get all attributes from query text splitting by comma
+					// Location:Pune
+					String[] attributeValues = text.split(",");
+
+					// Iterate over each attribute
+					for (String attributeValue : attributeValues) {
+						
+						if(!attributeValue.isEmpty() && attributeValue.length()>0){
+							// split attribute into array [Location,Pune]
+							String[] attributeArr = attributeValue.split(":");
+
+							if(attributeArr.length>0 && attributeArr[0]!=null && !attributeArr[0].isEmpty() ){
+								// count the number of occurrences of each attribute
+								// e.g Location:Pune and Location:Mumbai so location occurrences are 2
+								if (null != map && null != map.get(attributeArr[0])) {
+									queryDetails = new QueryDetail();
+									queryDetails = map.get(attributeArr[0]); // 
+									queryDetails.setProbability(queryDetails.getProbability() + 1);
+									queryDetails.getValues().add(attributeArr[1]);
+									map.put(attributeArr[0], queryDetails);
+								} else {
+									
+									if(attributeArr.length>1){
+										
+										if(attributeArr[1]!=null && !attributeArr[1].isEmpty()){
+											queryDetails = new QueryDetail();
+											queryDetails.setProbability(1.0f);
+											queryDetails.getValues().add(attributeArr[1]);
+											map.put(attributeArr[0], queryDetails);	
+										}
+										
+									}
+								}
+							}
+									
+						}
+					}
+				}
+			}
+
+			// add query attribute in list
+			for (Map.Entry<String, QueryDetail> entry : map.entrySet()) {
+				QueryDetail queryDetail = entry.getValue();
+
+				// formula to calculate probability
+				float priority = entry.getValue().getProbability() + 1 / queryTexts.length;
+
+				// create object which hold attribute information
+				QueryAttribute attribute = new QueryAttribute();
+				attribute.setName(entry.getKey());
+				attribute.setProbability(priority);
+				attribute.setKeyword(StringUtils.join(queryDetail.getValues(), ","));
+				attribute.setQueryText(queryText);
+				attributes.add(attribute);
+			}
+
+			// save query attributes
+			queryText.setQueryAttributes(attributes);
+			queryTextService.add(queryText);
+
+			// get all query texts
+			List<QueryText> queryText1 = queryTextService.getAll();
+
+			for (QueryText qt : queryText1) {
+
+				List<QueryAttribute> queryAttributes = qt.getQueryAttributes();
+				Collections.sort(queryAttributes);
+
+				// get all user documents
+				List<UserDocument> documents = userDocumentService.findAll();
+
+				// iterate over query attributes for all user documents
+				for (QueryAttribute queryAttribute : queryAttributes) {
+
+					for (UserDocument document : documents) {
+
+						if (queryAttribute.getName().equalsIgnoreCase("location")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getDealerLocation().equalsIgnoreCase(s)) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						} else if (queryAttribute.getName().equalsIgnoreCase("type")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getProductType().equalsIgnoreCase(s)) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						} else if (queryAttribute.getName().equalsIgnoreCase("name")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getProductName().equalsIgnoreCase(s)) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						} else if (queryAttribute.getName().equalsIgnoreCase("price")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getProductPrice().equals(Float.valueOf(s))) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						} else if (queryAttribute.getName().equalsIgnoreCase("noofvisit")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getNoOfVisit().equals(Integer.valueOf(s))) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						} else if (queryAttribute.getName().equalsIgnoreCase("rating")) {
+							String string[] = queryAttribute.getKeyword().split(",");
+							for (String s : string)
+								if (document.getProductRating().equals(Integer.valueOf(s))) {
+									result.add(document);
+									userDocuments.put(document, queryAttribute.getProbability());
+								}
+						}
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return userDocuments;
+	}
+
+	@Override
+	public Map<UserDocument, Float> getContentValueDocuments(QueryText queryText) {
+
+		try {
+			List<UserDocument> documents = userDocumentService.findAll();
+
+			Map<UserDocument,Float> map = new TreeMap<>();
+
+			for(UserDocument document : documents){
+
+				String[] queryTexts = queryText.getText().split("\n");
+
+				if(queryTexts!=null && queryTexts.length>0){
+
+					for (String text : queryTexts) {
+						String[] attributeValues = text.split(",");
+
+						for(String attributeValue : attributeValues){
+
+							String[] attributeArr = attributeValue.split(":");
+
+							if(attributeArr[0].trim().equalsIgnoreCase("location")){
+								//if(document.getDealerLocation().contains(attributeArr[1])){
+								if(document.getDealerLocation().toLowerCase().contains(attributeArr[1].toLowerCase())){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getDealerLocation().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+									System.out.println("------------------- Location -----------------------------");
+									System.out.println("all documents having keyword: "+attributePresentInDocuments.size());
+									System.out.println("document count "+allDocuments.size());
+									System.out.println("wordCount : "+wordCount);
+									System.out.println("Dealer Location : "+document.getDealerLocation().toLowerCase());
+									System.out.println("Formula result : "+(wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1));
+									System.out.println("Name : "+document.getProductName());
+
+
+									System.out.println("avg:"+avg);
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("type")){
+								if(document.getProductType().toLowerCase().contains(attributeArr[1].toLowerCase())){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getProductType().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+									
+									System.out.println("------------------- Type -----------------------------");
+									System.out.println("attributePresentInDocuments : "+attributePresentInDocuments.size());
+									System.out.println("attributePresentInDocuments : "+allDocuments.size());
+									System.out.println("wordCount : "+wordCount);
+									System.out.println("document.getDealerLocation().toLowerCase() : "+document.getDealerLocation().toLowerCase());
+									System.out.println("Formula result : "+(wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1));
+									System.out.println("Name : "+document.getProductName());
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("name")){
+								if(document.getProductName().toLowerCase().contains(attributeArr[1].toLowerCase())){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getProductName().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("price")){
+								if(document.getProductPrice() == Float.valueOf(attributeArr[1])){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getProductPrice().toString().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("noofvisit")){
+								if(document.getNoOfVisit() == Integer.valueOf(attributeArr[1])){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getNoOfVisit().toString().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("rating")){
+								if(document.getProductRating() == Integer.valueOf(attributeArr[1])){
+									List<UserDocument> attributePresentInDocuments = userDocumentService.findAllByAttributes(attributeArr[0], attributeArr[1]);
+									List<UserDocument> allDocuments = userDocumentService.findAll();
+									int wordCount = StringUtils.countMatches(document.getProductRating().toString().toLowerCase(), attributeArr[1].toLowerCase());
+
+									Float avg = (float) (wordCount+1/attributePresentInDocuments.size()+allDocuments.size()+1);
+									map.put(document, avg);
+								}
+							}
+						}
+					}	
+				}
+			}
+
+			sortedMap = ValueComparators.sortByComparator(map);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
+
+		return sortedMap;
+	}
+	
+	@Override
+	public Map<UserDocument,Float> getMappingAlgo(QueryText queryText){
+
+		
+		try {
+			List<UserDocument> documents = userDocumentService.findAll();
+
+			Map<UserDocument,Float> map = new TreeMap<>();
+
+			for(UserDocument document : documents){
+				
+				Float documentScore=0f;
+
+
+				String[] queryTexts = queryText.getText().split("\n");
+
+				if(queryTexts!=null && queryTexts.length>0){
+
+					for (String text : queryTexts) {
+						String[] attributeValues = text.split(",");
+
+						for(String attributeValue : attributeValues){
+
+							String[] attributeArr = attributeValue.split(":");
+
+							if(attributeArr[0].trim().equalsIgnoreCase("type")){
+								if(document.getProductType().toLowerCase().contains(attributeArr[1].toLowerCase())){
+									documentScore++; 
+									
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("name")){
+								if(document.getProductName().toLowerCase().contains(attributeArr[1].toLowerCase())){
+									documentScore++; 
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("price")){
+								// sort documents by price
+								 Collections.sort(documents,new SortUserDocumentByPrice());
+									
+								// get minimum price from document
+								 Float minPrice = documents.get(0).getProductPrice();
+									
+								 // get maximum price from document
+								 Float maxPrice = documents.get(documents.size()-1).getProductPrice();
+								 
+								// is product price in range of minimum and maximum price
+								 if(Float.valueOf(attributeArr[1])>=minPrice && Float.valueOf(attributeArr[1])<=maxPrice){
+									 documentScore++;
+								 }
+							}else if(attributeArr[0].trim().equalsIgnoreCase("rating")){
+								// if rating is greater then avg rating then increase document score
+								if(document.getProductRating() == Integer.valueOf(attributeArr[1])){
+									if(Integer.valueOf(attributeArr[1])>=document.getProductRating()){
+										documentScore++;
+									}
+								}
+							}else if(attributeArr[0].trim().equalsIgnoreCase("location")){
+								
+									boolean flag=false;
+									Location loation = null;
+									// get all locations and check is this location present there
+										if(document.getDealerLocation()!=null && document.getDealerLocation().contains(attributeArr[1])){
+											flag = true;
+											break;
+										}
+									
+									
+									// if location not found in dealer location then find in sub location
+									if(!flag){
+									
+										loation = locationService.getSubLocationByLocation(attributeArr[1]);
+										
+										if(null!=loation){
+											flag = true;
+										}
+									}
+									
+									if(flag && (document.getDealerLocation().equalsIgnoreCase(loation.getSubLocationName())||document.getDealerLocation().equalsIgnoreCase(loation.getLocationName())) ){
+										// formula 
+										documentScore =(documentScore+=2f*1f);
+									}else{
+										// formula 
+										documentScore =(documentScore+=2f*0f);
+									}
+								}
+							}
+						}	
+					}
+				
+				// document score value
+				map.put(document, documentScore);
+				
+			}
+
+			sortedMap = ValueComparators.sortByComparator(map);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
+
+		return sortedMap;
+	
+	}
+
+}

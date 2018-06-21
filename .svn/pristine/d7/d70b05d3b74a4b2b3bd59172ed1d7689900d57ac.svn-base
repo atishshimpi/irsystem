@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE tiles-definitions PUBLIC  
+        "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"  
+        "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+    <definition name="DefaultTemplate" template="/WEB-INF/views/jsp/layouts/layout.jsp">
+		<put-attribute name="title" value="Home" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/header.jsp" />
+		<put-attribute name="menu" value="/WEB-INF/views/jsp/templates/menu.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/jsp/templates/footer.jsp" />
+		
+      <put-list-attribute name="javascripts">
+			<add-attribute value="/resources/js/custom/jquery.min.js" />
+			<add-attribute value="/resources/js/custom/responsiveslides.min.js" />
+			
+      </put-list-attribute>
+    	
+    	<put-list-attribute name="stylesheets">
+	        <add-attribute value="/resources/css/custom/bootstrap.css" />
+	        <add-attribute value="/resources/css/custom/style.css" />
+			<add-attribute value="//fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800" />
+			<add-attribute value="/resources/css/custom/style_login.css" />
+    	</put-list-attribute>
+	</definition>
+	
+	
+	
+	<!-- user tiles -->
+	
+	<definition name="index" extends="DefaultTemplate">
+		<put-attribute name="title" value="IRSystem-Online Shopping" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/index.jsp" />
+	</definition>
+	
+	<definition name="user_login" extends="DefaultTemplate">
+		<put-attribute name="title" value="User Login" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_login.jsp" />
+	</definition>
+	
+	<definition name="user_registration" extends="DefaultTemplate">
+		<put-attribute name="title" value="User Registration" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_registration.jsp" />
+	</definition>
+	
+	<definition name="user_home" extends="DefaultTemplate">
+		<put-attribute name="title" value="Shopping Home" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_home.jsp" />
+	</definition>
+	
+	<definition name="user_edit" extends="DefaultTemplate">
+		<put-attribute name="title" value="User Edit" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_edit.jsp" />
+	</definition>
+	
+	<!-- file -->
+	<definition name="user_manage_products" extends="DefaultTemplate">
+		<put-attribute name="title" value="Manage Products" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/admin_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_manage_products.jsp" />
+	</definition>
+	
+	<definition name="user_registred_users" extends="DefaultTemplate">
+		<put-attribute name="title" value="Registred Users" />
+		<put-attribute name="menu" value="/WEB-INF/views/jsp/templates/menu_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_registred_users.jsp" />
+	</definition>
+	
+	<!-- authority tiles -->
+	
+	<definition name="authority_registration" extends="DefaultTemplate">
+		<put-attribute name="title" value="Admin Registration" />
+		<put-attribute name="menu" value="/WEB-INF/views/jsp/templates/menu_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/authority_registration.jsp" />
+	</definition>
+	
+	<definition name="authority_login" extends="DefaultTemplate">
+		<put-attribute name="title" value="Admin Login" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/authority_login.jsp" />
+	</definition>
+	
+	<definition name="authority_home" extends="DefaultTemplate">
+		<put-attribute name="title" value="Admin Home" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/admin_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/authority_home.jsp" />
+	</definition>
+	
+	<definition name="authority_edit" extends="DefaultTemplate">
+		<put-attribute name="title" value="Admin Edit" />
+		<put-attribute name="menu" value="/WEB-INF/views/jsp/templates/admin_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/authority_edit.jsp" />
+	</definition>
+	
+	<definition name="user_sharefile" extends="DefaultTemplate">
+		<put-attribute name="title" value="Share File" />
+		<put-attribute name="menu" value="" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_sharefile.jsp" />
+	</definition>
+	
+	<!-- QC -->
+	<definition name="user_query_value" extends="DefaultTemplate">
+		<put-attribute name="title" value="Query Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_query_value.jsp" />
+	</definition>
+	
+	<definition name="user_query_value_result" extends="DefaultTemplate">
+		<put-attribute name="title" value="Query Value Result" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_query_value_result.jsp" />
+	</definition>
+	
+	<definition name="user_content_value" extends="DefaultTemplate">
+		<put-attribute name="title" value="Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_content_value.jsp" />
+	</definition>
+	
+	<definition name="user_content_value_result" extends="DefaultTemplate">
+		<put-attribute name="title" value="Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_content_value_result.jsp" />
+	</definition>
+	
+	<definition name="user_qc_value" extends="DefaultTemplate">
+		<put-attribute name="title" value="Query Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_qc_value.jsp" />
+	</definition>
+	
+	<definition name="user_product_details" extends="DefaultTemplate">
+		<put-attribute name="title" value="Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_product_details.jsp" />
+	    <put-attribute name="footer" value="" />
+	</definition>
+	
+	<definition name="user_mapping_algo" extends="DefaultTemplate">
+		<put-attribute name="title" value="Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_mapping_algo.jsp" />
+	</definition>
+	
+	<definition name="user_mapping_algo_result" extends="DefaultTemplate">
+		<put-attribute name="title" value="Content Value" />
+		<put-attribute name="header" value="/WEB-INF/views/jsp/templates/user_header.jsp" />
+	    <put-attribute name="body" value="/WEB-INF/views/jsp/user_mapping_algo_result.jsp" />
+	</definition>
+	
+	
+</tiles-definitions>

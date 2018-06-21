@@ -1,0 +1,43 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<c:set var="contextPath" value="${pageContext.request.contextPath}"/>
+<!--header-->
+	<div class="header">
+		<div class="top-header">
+			<div class="container">
+				<div class="top-header-left">
+					<ul class="support">
+						<li><a href="#"><label> </label></a></li>
+						<li><a href="#">24x7 live<span class="live"> support</span></a></li>
+					</ul>
+					<ul class="support">
+						<li class="van"><a href="#"><label> </label></a></li>
+						<li><a href="#">Free shipping <span class="live">on order over 500</span></a></li>
+					</ul>
+					<div class="clearfix"> </div>
+				</div>
+				<div class="clearfix"> </div>		
+			</div>
+		</div>
+		<div class="bottom-header">
+			<div class="container">
+				<div class="header-bottom-left">
+					<!-- <div class="logo" style="width: 100%;font-size: 15pt;color: #30c0f0;font-weight: bold;font-family: cursive;">
+						Effective Information Retrieval and Product Recommendation
+					</div> -->
+					<!--<div class="search">
+						<form>
+							<input type="text" value="" onfocus="this.value = '';" onblur="if (this.value == '') {this.value = '';}" >
+							<input type="submit"  value="SEARCH">
+						</form>
+					</div> -->
+					<div class="clearfix"> </div>
+				</div>
+				<div class="header-bottom-right" style="width: 31%;"  >					
+						<div class="cart" style="width: 60%;">&nbsp;</div>
+						<div class="cart" style="width: 20%;"><a href="#"><span> </span>CART</a></div>
+						<div class="account" style="width: 20%;"><a href="${contextPath}/user/displayLogin"><span> </span>Logout</a></div>
+				</div>
+				<div class="clearfix"> </div>	
+			</div>
+		</div>
+	</div>

@@ -1,0 +1,132 @@
+package com.org.irsystem.service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.org.irsystem.dao.UserDAO;
+import com.org.irsystem.dao.UserDocumentDao;
+import com.org.irsystem.model.User;
+import com.org.irsystem.model.UserDocument;
+import com.org.irsystem.model.UserDocumentToken;
+import com.org.irsystem.util.ValueComparators;
+
+@Service("userDocumentService")
+@Transactional
+public class UserDocumentServiceImpl implements UserDocumentService{
+
+	@Autowired
+	UserDocumentDao dao;
+	
+	@Autowired
+	UserDAO userDAO;
+
+	public UserDocument findById(Long id) {
+		return dao.findById(id);
+	}
+
+	public List<UserDocument> findAll() {
+		return dao.findAll();
+	}
+
+	public List<UserDocument> findAllByUserId(Long userId) {
+		return dao.findAllByUserId(userId);
+	}
+	
+	@Override
+	public List<UserDocument> findSharedFilesByUserId(Long userId) {
+		return dao.findSharedFilesByUserId(userId);
+	}
+	
+	public void saveDocument(UserDocument document){
+		
+		// content value
+		
+		String[] udArray = document.toString().split(" ");
+		Map<String,Integer> map = new HashMap<>(); 
+		
+		for (String udString : udArray) {
+			
+			if(map!=null){
+				
+				if(map.containsKey(udString)){
+					map.put(udString, map.get(udString)+1);
+				}else{
+					if(null != udString && ! udString.isEmpty())
+						map.put(udString, 1);			
+				}
+				
+			}
+		}
+		
+		
+		UserDocumentToken token = null;
+		Set<UserDocumentToken> documentTokens = new HashSet<>();
+		for(Map.Entry<String, Integer> entry : map.entrySet()){
+			token = new UserDocumentToken();
+			token.setToken(entry.getKey());
+			token.setCount(entry.getValue());
+			token.setUserDocument(document);
+			documentTokens.add(token);
+		}
+		
+		System.out.println(map);
+		document.setDocumentTokens(documentTokens);
+		dao.save(document);
+		
+		
+			
+	}
+
+	public void deleteById(Long id){
+		dao.deleteById(id);
+	}
+
+	@Override
+	public List<UserDocument> findAllByAttributes(String attributeKey, String attributeValue) {
+		return dao.findAllByAttributes(attributeKey, attributeValue);
+	}
+
+	@Override
+	public List<UserDocument> getRecommendedDocuments(Long userId) {
+		
+		List<User> users = userDAO.listUserRoleUsers();
+		int userSize = users.size();
+		
+		List<UserDocument> documents = dao.findAll();
+		
+		Map<UserDocument,Float> map = new TreeMap<UserDocument,Float>();
+		
+		for(UserDocument document : documents){
+			
+			
+			
+			
+			int rating = document.getProductRating();
+			float avgRating = rating/userSize;
+			map.put(document, avgRating);
+		}
+
+		// Descending order of values
+		Map<UserDocument,Float> sortedMap = ValueComparators.sortByComparator(map);
+		documents = new ArrayList<>(sortedMap.keySet());
+		Collections.reverse(documents);
+		
+		for(Map.Entry<UserDocument, Float> entry : sortedMap.entrySet()){
+			System.out.println("Name : "+entry.getKey().getProductName()+" Formula Result :  "+entry.getValue());
+		}
+		
+		
+		return documents;
+	}
+	
+}

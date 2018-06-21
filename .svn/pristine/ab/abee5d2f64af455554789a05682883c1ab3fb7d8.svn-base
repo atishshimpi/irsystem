@@ -1,0 +1,179 @@
+package com.org.irsystem;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.org.irsystem.model.QueryText;
+import com.org.irsystem.model.User;
+import com.org.irsystem.model.UserDocument;
+import com.org.irsystem.service.SearchService;
+import com.org.irsystem.service.UserDocumentService;
+import com.org.irsystem.service.UserService;
+
+
+@Controller
+public class SearchController {
+
+	@Resource(name = "userService")
+	private UserService userService;
+	
+	@Resource
+	private UserDocumentService userDocumentService;
+	
+	@Autowired
+	private SearchService searchService;	
+	
+	@RequestMapping(value = "/search/displayQueryValue", method = RequestMethod.GET)
+    public String displayQueryValue(HttpServletRequest request, ModelMap model) {
+    	
+		QueryText queryText = new QueryText();
+		model.addAttribute("queryText", queryText);
+		User user = (User)request.getSession().getAttribute("user");
+ 	    List<UserDocument> userDocuments = userDocumentService.getRecommendedDocuments(user.getId());
+    	model.addAttribute("userDocuments", userDocuments);
+    	model.addAttribute("user", user);
+    	return "user_query_value";
+
+    }
+	
+	@RequestMapping(value = "/search/queryvalue", method = RequestMethod.POST)
+	public String serchQueryValue(@ModelAttribute("queryText") QueryText queryText, ModelMap model){
+		Map<UserDocument,Float> userDocuments = searchService.getQueryValueDocuments(queryText);
+		model.addAttribute("userDocuments", userDocuments.keySet());
+		return "user_query_value_result";
+	}
+	
+	
+	@RequestMapping(value = "/search/displayContentValue", method = RequestMethod.GET)
+    public String displayContentValue(HttpServletRequest request, ModelMap model) {
+		
+		QueryText queryText = new QueryText();
+		model.addAttribute("queryText", queryText);
+		
+		User user = (User)request.getSession().getAttribute("user");
+ 	    List<UserDocument> userDocuments = userDocumentService.getRecommendedDocuments(user.getId());
+    	model.addAttribute("userDocuments", userDocuments);
+    	model.addAttribute("user", user);
+    	return "user_content_value";
+
+    }
+	
+	@RequestMapping(value = "/search/contentvalue", method = RequestMethod.POST)
+	public String serchContentValue(@ModelAttribute("queryText") QueryText queryText, ModelMap model){
+		
+		Map<UserDocument,Float> sortedMap = searchService.getContentValueDocuments(queryText);
+		System.out.println("--------------------- content value ------------------");
+		for(Map.Entry<UserDocument, Float> entry : sortedMap.entrySet()){
+			System.out.println("Name : "+entry.getKey().getProductName()+" Formula Result :  "+entry.getValue());
+		}
+		
+		
+		List<UserDocument> userDocument = new ArrayList<>(sortedMap.keySet());
+		Collections.reverse(userDocument);
+		model.addAttribute("userDocuments",userDocument);
+		
+		return "user_content_value_result";
+	}
+	
+	
+	@RequestMapping(value = "/search/displayQueryContentValue", method = RequestMethod.GET)
+    public String displayLoginUser(HttpServletRequest request, ModelMap model) {
+ 
+		QueryText queryText = new QueryText();
+		model.addAttribute("queryText", queryText);
+		
+		User user = (User)request.getSession().getAttribute("user");
+ 	    List<UserDocument> userDocuments = userDocumentService.getRecommendedDocuments(user.getId());
+    	model.addAttribute("userDocuments", userDocuments);
+    	model.addAttribute("user", user);
+    	return "user_qc_value";
+
+    }
+	
+	@RequestMapping(value = "/search/querycontentvalue", method = RequestMethod.POST)
+	public String serchQueryContentValue(@ModelAttribute("queryText") QueryText queryText, ModelMap model){
+		
+		System.out.println(queryText.getText());
+		
+		Map<UserDocument,Float> querySortedMap = searchService.getQueryValueDocuments(queryText);
+		List<UserDocument> queryUserDocuments = new ArrayList<>(querySortedMap.keySet());
+		
+		Map<UserDocument,Float> contentSortedMap = searchService.getContentValueDocuments(queryText);
+		
+		System.out.println("--------------------- content value ------------------");
+		for(Map.Entry<UserDocument, Float> entry : contentSortedMap.entrySet()){
+			System.out.println("Document Name : "+entry.getKey().getName()+" Formula Result : wc+1/ "+entry.getValue());
+		}
+		
+		List<UserDocument> contentUserDocuments = new ArrayList<>(contentSortedMap.keySet());
+		
+		contentUserDocuments.addAll(queryUserDocuments);
+		Collections.reverse(contentUserDocuments);
+		
+		Set<UserDocument> documentSet = new HashSet<>(contentUserDocuments);
+		
+		model.addAttribute("userDocuments",documentSet);
+		
+		return "user_query_value_result";
+	}
+	
+	@RequestMapping(value = "/search/user_product_details", method = RequestMethod.GET)
+	public String productDetails(HttpServletRequest request, ModelMap model){
+
+ 	   QueryText queryText = new QueryText();
+ 	   model.addAttribute("queryText", queryText);
+		
+ 	   UserDocument userDocuments = userDocumentService.findById(Long.valueOf(request.getParameter("id")));
+	   model.addAttribute("userDocuments", userDocuments);
+		
+		return "user_product_details";
+	}
+	
+	
+	@RequestMapping(value = "/search/displayMappingAlgorithm", method = RequestMethod.GET)
+    public String displayMappingAlgorithm(HttpServletRequest request, ModelMap model) {
+		
+		QueryText queryText = new QueryText();
+		model.addAttribute("queryText", queryText);
+		
+		User user = (User)request.getSession().getAttribute("user");
+ 	    List<UserDocument> userDocuments = userDocumentService.getRecommendedDocuments(user.getId());
+    	model.addAttribute("userDocuments", userDocuments);
+    	model.addAttribute("user", user);
+    	return "user_mapping_algo";
+
+    }
+	
+	@RequestMapping(value = "/search/mapping_algorithm", method = RequestMethod.POST)
+	public String serchMappingAlgorithm(@ModelAttribute("queryText") QueryText queryText, ModelMap model){
+		
+		Map<UserDocument,Float> sortedMap = searchService.getMappingAlgo(queryText);
+		System.out.println("--------------------- content value ------------------");
+		for(Map.Entry<UserDocument, Float> entry : sortedMap.entrySet()){
+			System.out.println("Name : "+entry.getKey().getProductName()+" Formula Result :  "+entry.getValue());
+		}
+		
+		
+		List<UserDocument> userDocument = new ArrayList<>(sortedMap.keySet());
+		Collections.reverse(userDocument);
+		model.addAttribute("userDocuments",userDocument);
+		
+		return "user_mapping_algo_result";
+	}
+	
+	
+}

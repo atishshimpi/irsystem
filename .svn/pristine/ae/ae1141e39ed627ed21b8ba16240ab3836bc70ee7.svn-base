@@ -1,0 +1,9 @@
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/irsystem
+jdbc.username=root
+jdbc.password=
+hibernate.dialect=org.hibernate.dialect.MySQLDialect
+hibernate.show_sql=true
+hibernate_hbm2ddl_auto=update
+current_session_context_class=thread
+hibernate.enable_lazy_load_no_trans=true
